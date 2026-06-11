@@ -22,7 +22,7 @@ Most "create an MCP server" guides leave you with an empty skeleton and a 20-ste
 
 ## Turn any REST API into an MCP server
 
-Every other scaffolder hands you an *empty* template and says "now go write your tools." `mcp-quickstart` is the only one that can **read an existing API and write the tools for you** — from an OpenAPI spec **or** a single curl command:
+Most scaffolders hand you an *empty* template and say "now go write your tools." `mcp-quickstart` can instead **read an existing API and write the tools for you** — from an OpenAPI spec **or** a single curl command:
 
 ```bash
 # whole API, from an OpenAPI spec:
@@ -167,6 +167,16 @@ Pick the transport at scaffold time:
 ```bash
 npm create mcp-quickstart@latest my-server -- --lang ts --transport http -y
 ```
+
+## Related tools
+
+mcp-quickstart isn't the only way to turn an API into an MCP server, and it's worth knowing the landscape:
+
+- [openapi-mcp-generator](https://github.com/harsha-iiiv/openapi-mcp-generator) — the most popular OpenAPI→MCP generator (TS, stdio/SSE/HTTP, endpoint filtering).
+- [Speakeasy](https://www.speakeasy.com/blog/generate-mcp-from-openapi) / Gram, [FastMCP](https://github.com/jlowin/fastmcp), [cnoe-io/openapi-mcp-codegen](https://github.com/cnoe-io/openapi-mcp-codegen) — generators and managed hosting, including Python options.
+- [Cloudflare Agents (`McpAgent`)](https://developers.cloudflare.com/agents/model-context-protocol/) — the official path for remote MCP servers on Workers, with built-in OAuth.
+
+Where mcp-quickstart fits: a **single, dependency-light CLI** that covers the common cases end to end — plain TS/Python starters, OpenAPI **and** curl import, and a one-command path from an API all the way to a deployed Cloudflare Worker — generating **plain code you own** (no runtime spec parsing, no lock-in). If you need managed hosting, governance, or deep SDK generation, reach for the tools above.
 
 ## Roadmap
 
