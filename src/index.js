@@ -28,6 +28,7 @@ const LANGUAGES = [
 const TRANSPORTS = [
   { title: "stdio       (local tools, Claude Desktop / Cursor)", value: "stdio" },
   { title: "http        (remote / hosted, streamable HTTP)", value: "http" },
+  { title: "cloudflare  (remote MCP server on Cloudflare Workers)", value: "cloudflare" },
 ];
 
 function parseArgs(argv) {
@@ -174,8 +175,13 @@ async function run() {
 
   const langAliases = { ts: "typescript", js: "typescript", typescript: "typescript", py: "python", python: "python" };
   const rawLang = flags.lang || responses.language || "typescript";
-  const language = isGenerated ? "typescript" : langAliases[String(rawLang).toLowerCase()] || rawLang;
   const transport = isGenerated ? "openapi" : flags.transport || responses.transport || "stdio";
+  // The Cloudflare Workers template is TypeScript-only.
+  const language = isGenerated
+    ? "typescript"
+    : transport === "cloudflare"
+    ? "typescript"
+    : langAliases[String(rawLang).toLowerCase()] || rawLang;
   const withExamples =
     flags.examples !== undefined
       ? flags.examples !== "false" && flags.examples !== false
@@ -250,16 +256,28 @@ async function run() {
 }
 
 function printNextSteps({ projectName, language, transport, isOpenApi }) {
+  console.log("");
+  console.log(pc.green(pc.bold("  Done.")) + pc.dim("  Next steps:"));
+  console.log("");
+  console.log("    " + pc.cyan(`cd ${projectName}`));
+
+  if (transport === "cloudflare") {
+    console.log("    " + pc.cyan("npm install"));
+    console.log("    " + pc.cyan("npm run dev") + pc.dim("          # local MCP endpoint at http://localhost:8787/mcp"));
+    console.log("    " + pc.cyan("npx wrangler login") + pc.dim("   # one-time"));
+    console.log("    " + pc.cyan("npm run deploy") + pc.dim("       # deploy to the edge, prints your https URL"));
+    console.log("");
+    console.log(pc.dim("  Then add the /mcp URL to Cursor / Claude: see the generated README.md"));
+    console.log("");
+    return;
+  }
+
   const isPy = language === "python";
   const isHttp = transport === "http";
   const install = isPy ? "uv sync          (or: pip install -e \".[dev]\")" : "npm install";
   const dev = isPy ? (isHttp ? "uv run python server.py" : "python server.py") : "npm run dev";
   const inspect = isHttp ? "npm run inspect" : isPy ? "uv run mcp dev server.py" : "npm run inspect";
 
-  console.log("");
-  console.log(pc.green(pc.bold("  Done.")) + pc.dim("  Next steps:"));
-  console.log("");
-  console.log("    " + pc.cyan(`cd ${projectName}`));
   console.log("    " + pc.cyan(install));
   if (isOpenApi) {
     console.log("    " + pc.cyan("cp .env.example .env") + pc.dim("   # set API_BASE_URL + auth"));
@@ -283,7 +301,7 @@ function printHelp() {
     --from-openapi <path|url>   generate one MCP tool per API operation from an OpenAPI spec
     --from-curl <cmd|file>      turn a single curl command into an MCP tool
     --lang <ts|python>          language (default: prompt)
-    --transport <stdio|http>    transport (default: prompt)
+    --transport <stdio|http|cloudflare>  transport / deploy target (default: prompt)
     --examples <true|false>     include example tool/resource/prompt
     --yes, -y                   accept defaults, skip prompts
     --help, -h                  show this help
@@ -293,6 +311,8 @@ function printHelp() {
     npm create mcp-quickstart@latest weather-server
     npx mcp-quickstart my-server --lang ts --transport http -y
     npx mcp-quickstart my-server --lang python --transport stdio -y
+    ${pc.dim("# remote MCP server on Cloudflare Workers (free plan):")}
+    npx mcp-quickstart edge-server --transport cloudflare -y
     ${pc.dim("# turn any REST API into an MCP server:")}
     npx mcp-quickstart petstore-mcp --from-openapi https://petstore3.swagger.io/api/v3/openapi.json
     ${pc.dim("# or turn a single curl command into a tool:")}

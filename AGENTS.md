@@ -20,7 +20,8 @@ src/
 templates/
   typescript-stdio/    working TS MCP server (stdio)
   typescript-http/     working TS MCP server (streamable HTTP, Express)
-  typescript-openapi/  TS MCP server generated from an OpenAPI spec ({{TOOLS}} injection)
+  typescript-openapi/  TS MCP server generated from an OpenAPI spec / curl ({{TOOLS}} injection)
+  typescript-cloudflare/ remote MCP server for Cloudflare Workers (createMcpHandler, wrangler)
   python-stdio/        working Python MCP server (stdio)
   python-http/         working Python MCP server (streamable HTTP, FastMCP)
 ```

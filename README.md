@@ -48,6 +48,21 @@ No magic, no runtime spec parsing — just generated TypeScript you own and can 
 
 ---
 
+## Deploy a remote MCP server to the edge
+
+Local stdio servers are great, but the ecosystem is moving to **remote** MCP servers over Streamable HTTP. mcp-quickstart can scaffold one that **deploys to Cloudflare Workers** — stateless (`createMcpHandler`, no Durable Objects), so it runs on the **free Workers plan**, cold-starts in milliseconds, and is reachable globally:
+
+```bash
+npx mcp-quickstart edge-server --transport cloudflare -y
+cd edge-server && npm install
+npx wrangler login
+npm run deploy        # → https://edge-server.<you>.workers.dev/mcp
+```
+
+Then point Cursor / Claude at the `/mcp` URL. This is exactly what edge runtimes are good at — **low-latency orchestration**, not running models. (To run a model you still call a GPU backend; the Worker is the global front door / gateway.)
+
+---
+
 ## Why mcp-quickstart
 
 The official scaffolder gives you a bare bones starting point. `mcp-quickstart` is the *"…but without the part you hate"* version:
@@ -62,6 +77,7 @@ The official scaffolder gives you a bare bones starting point. `mcp-quickstart` 
 | TypeScript **and** Python | one | ✅ both |
 | **Generate tools from an OpenAPI spec** | – | ✅ |
 | **Generate a tool from a curl command** | – | ✅ |
+| **One-command deploy to Cloudflare Workers** | – | ✅ |
 | `.env.example`, `.gitignore`, sane `tsconfig` | partly | ✅ |
 
 ## Quick start
@@ -110,7 +126,7 @@ npm create mcp-quickstart@latest [name] [options]
   --from-openapi <path|url>  generate one MCP tool per API operation from an OpenAPI spec
   --from-curl <cmd|file>     turn a single curl command into an MCP tool
   --lang <ts|python>         language (default: prompt)
-  --transport <stdio|http>   transport (default: prompt)
+  --transport <stdio|http|cloudflare>   transport / deploy target (default: prompt)
   --examples <bool>          include the example primitives (default: true)
   --yes, -y                  accept defaults, skip prompts
   --help, -h                 show help
@@ -124,6 +140,7 @@ npm create mcp-quickstart@latest [name] [options]
 | TypeScript | streamable HTTP | ✅ stable |
 | TypeScript | **from OpenAPI** (`--from-openapi`) | ✅ stable |
 | TypeScript | **from curl** (`--from-curl`) | ✅ stable |
+| TypeScript | **Cloudflare Workers** (`--transport cloudflare`) | ✅ stable |
 | Python | stdio | ✅ stable |
 | Python | streamable HTTP | ✅ stable |
 
@@ -135,12 +152,12 @@ npm create mcp-quickstart@latest my-server -- --lang ts --transport http -y
 
 ## Roadmap
 
+- Combine the importers with the edge target: `--from-openapi … --transport cloudflare` (deploy an API-backed MCP server to Workers in one shot)
 - `--from-postman` importer (Postman collections → MCP tools)
 - Python output for the generated (OpenAPI / curl) servers
-- `--with auth` (OAuth) preset for HTTP transport
-- GitHub Action template to publish your server to npm / PyPI
+- `--with auth` (OAuth) preset for the Cloudflare / HTTP transports
 
-Done: `--from-openapi` (v0.2.0) · `--from-curl` (v0.3.0) · per-field typed request bodies / `$ref` resolution (v0.4.0).
+Done: `--from-openapi` (v0.2.0) · `--from-curl` (v0.3.0) · per-field typed bodies / `$ref` (v0.4.0) · **Cloudflare Workers deploy target** (v0.5.0).
 
 Issues and PRs welcome — every issue gets a reply within 24h.
 

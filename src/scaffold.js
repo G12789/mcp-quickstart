@@ -5,6 +5,7 @@ const TEXT_EXTENSIONS = new Set([
   ".ts",
   ".js",
   ".json",
+  ".jsonc",
   ".md",
   ".txt",
   ".toml",
