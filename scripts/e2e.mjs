@@ -21,6 +21,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CLI = join(__dirname, "..", "src", "index.js");
 const SAMPLE_SPEC = join(__dirname, "fixtures", "sample-openapi.json");
+const SAMPLE_CURL = join(__dirname, "fixtures", "sample-curl.txt");
 
 const TS_TEMPLATES = [
   { lang: "ts", transport: "stdio" },
@@ -86,6 +87,20 @@ function checkOpenApi() {
   log(`[OpenAPI] OK`);
 }
 
+function checkCurl() {
+  const name = "curl-import";
+  log(`\n[curl] scaffolding from curl command...`);
+  run(process.execPath, [CLI, name, "--from-curl", SAMPLE_CURL, "-y"], root);
+  const dir = join(root, name);
+  if (!existsSync(join(dir, "src", "index.ts"))) throw new Error("curl scaffold missing src/index.ts");
+  log(`[curl] npm install...`);
+  run("npm", ["install", "--no-audit", "--no-fund"], dir);
+  log(`[curl] npm run build (typecheck generated tool)...`);
+  run("npm", ["run", "build"], dir);
+  if (!existsSync(join(dir, "dist"))) throw new Error("build produced no dist/");
+  log(`[curl] OK`);
+}
+
 function checkPy({ lang, transport }) {
   const name = `py-${transport}`;
   log(`\n[PY ${transport}] scaffolding...`);
@@ -120,6 +135,13 @@ try {
   } catch (e) {
     failures++;
     console.error(`[OpenAPI] FAILED: ${e.message}`);
+  }
+
+  try {
+    checkCurl();
+  } catch (e) {
+    failures++;
+    console.error(`[curl] FAILED: ${e.message}`);
   }
 
   // Python is optional locally; skip cleanly if it is not installed.

@@ -6,6 +6,7 @@ import prompts from "prompts";
 import pc from "picocolors";
 import { scaffold } from "./scaffold.js";
 import { buildOpenApiVars } from "./openapi.js";
+import { buildCurlVars } from "./curl.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const TEMPLATES_DIR = join(__dirname, "..", "templates");
@@ -109,7 +110,25 @@ async function run() {
     );
     openApiSource = specPath;
   }
+
+  // curl mode: turn a single curl command into one MCP tool.
+  let curlSource = flags["from-curl"];
+  if (curlSource === true) {
+    const { curlText } = await prompts(
+      {
+        type: "text",
+        name: "curlText",
+        message: "Paste the curl command (or a path to a file containing it)",
+        validate: (v) => (v && v.trim() ? true : "A curl command is required"),
+      },
+      { onCancel }
+    );
+    curlSource = curlText;
+  }
+
   const isOpenApi = Boolean(openApiSource);
+  const isCurl = !isOpenApi && Boolean(curlSource);
+  const isGenerated = isOpenApi || isCurl;
 
   const responses = await prompts(
     [
@@ -117,25 +136,25 @@ async function run() {
         type: cliName ? null : "text",
         name: "projectName",
         message: "Project name",
-        initial: isOpenApi ? "my-api-mcp" : "my-mcp-server",
+        initial: isGenerated ? "my-api-mcp" : "my-mcp-server",
         validate: (v) => validateProjectName(v),
       },
       {
-        type: flags.lang || skipPrompts || isOpenApi ? null : "select",
+        type: flags.lang || skipPrompts || isGenerated ? null : "select",
         name: "language",
         message: "Language",
         choices: LANGUAGES,
         initial: 0,
       },
       {
-        type: flags.transport || skipPrompts || isOpenApi ? null : "select",
+        type: flags.transport || skipPrompts || isGenerated ? null : "select",
         name: "transport",
         message: "Transport",
         choices: TRANSPORTS,
         initial: 0,
       },
       {
-        type: flags.examples !== undefined || skipPrompts || isOpenApi ? null : "toggle",
+        type: flags.examples !== undefined || skipPrompts || isGenerated ? null : "toggle",
         name: "withExamples",
         message: "Include example tool / resource / prompt?",
         initial: true,
@@ -155,8 +174,8 @@ async function run() {
 
   const langAliases = { ts: "typescript", js: "typescript", typescript: "typescript", py: "python", python: "python" };
   const rawLang = flags.lang || responses.language || "typescript";
-  const language = isOpenApi ? "typescript" : langAliases[String(rawLang).toLowerCase()] || rawLang;
-  const transport = isOpenApi ? "openapi" : flags.transport || responses.transport || "stdio";
+  const language = isGenerated ? "typescript" : langAliases[String(rawLang).toLowerCase()] || rawLang;
+  const transport = isGenerated ? "openapi" : flags.transport || responses.transport || "stdio";
   const withExamples =
     flags.examples !== undefined
       ? flags.examples !== "false" && flags.examples !== false
@@ -164,7 +183,7 @@ async function run() {
       ? responses.withExamples
       : true;
 
-  // Build OpenAPI-derived variables (tool code, base URL, ...) before scaffolding.
+  // Build generated variables (tool code, base URL, ...) before scaffolding.
   let extraVars;
   if (isOpenApi) {
     console.log("");
@@ -176,9 +195,19 @@ async function run() {
       process.exit(1);
     }
     console.log(pc.dim(`  Found ${pc.reset(pc.bold(extraVars.TOOL_COUNT))} operations → ${extraVars.TOOL_COUNT} MCP tools.`));
+  } else if (isCurl) {
+    console.log("");
+    console.log(pc.dim(`  Parsing curl command ...`));
+    try {
+      extraVars = buildCurlVars(curlSource);
+    } catch (err) {
+      console.log(pc.red(`\n  Could not generate from curl: ${err?.message || err}\n`));
+      process.exit(1);
+    }
+    console.log(pc.dim(`  Built 1 MCP tool calling ${pc.reset(pc.bold(extraVars.BASE_URL))}.`));
   }
 
-  const templateName = isOpenApi ? "typescript-openapi" : `${language}-${transport}`;
+  const templateName = isGenerated ? "typescript-openapi" : `${language}-${transport}`;
   const templateDir = join(TEMPLATES_DIR, templateName);
   if (!existsSync(templateDir)) {
     console.log(
@@ -217,7 +246,7 @@ async function run() {
     },
   });
 
-  printNextSteps({ projectName, language, transport, isOpenApi });
+  printNextSteps({ projectName, language, transport, isOpenApi: isGenerated });
 }
 
 function printNextSteps({ projectName, language, transport, isOpenApi }) {
@@ -252,6 +281,7 @@ function printHelp() {
 
   ${pc.bold("Options")}
     --from-openapi <path|url>   generate one MCP tool per API operation from an OpenAPI spec
+    --from-curl <cmd|file>      turn a single curl command into an MCP tool
     --lang <ts|python>          language (default: prompt)
     --transport <stdio|http>    transport (default: prompt)
     --examples <true|false>     include example tool/resource/prompt
@@ -265,6 +295,8 @@ function printHelp() {
     npx mcp-quickstart my-server --lang python --transport stdio -y
     ${pc.dim("# turn any REST API into an MCP server:")}
     npx mcp-quickstart petstore-mcp --from-openapi https://petstore3.swagger.io/api/v3/openapi.json
+    ${pc.dim("# or turn a single curl command into a tool:")}
+    npx mcp-quickstart my-tool --from-curl "curl https://api.example.com/v1/search?q=hi -H 'Authorization: Bearer X'"
 `);
 }
 

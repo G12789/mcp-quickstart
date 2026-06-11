@@ -14,6 +14,12 @@ export interface EndpointOptions {
   pathParams: string[];
   queryParams: string[];
   hasBody: boolean;
+  /** Static headers baked in at generation time (e.g. imported from a curl). */
+  headers?: Record<string, string>;
+  /** Default query values, overridable by tool args. */
+  defaultQuery?: Record<string, string>;
+  /** Default request body, overridable by the `body` tool arg. */
+  defaultBody?: unknown;
 }
 
 export async function callEndpoint(
@@ -26,19 +32,27 @@ export async function callEndpoint(
   }
 
   const url = new URL(BASE_URL.replace(/\/$/, "") + path);
+  const query: Record<string, string> = { ...(opts.defaultQuery ?? {}) };
   for (const q of opts.queryParams) {
     const v = args[q];
-    if (v !== undefined && v !== null) url.searchParams.set(q, String(v));
+    if (v !== undefined && v !== null) query[q] = String(v);
   }
+  for (const [k, v] of Object.entries(query)) url.searchParams.set(k, v);
 
-  const headers: Record<string, string> = { "content-type": "application/json" };
+  const headers: Record<string, string> = {
+    "content-type": "application/json",
+    ...(opts.headers ?? {}),
+  };
   const authHeader = process.env.API_AUTH_HEADER;
   const authValue = process.env.API_AUTH_VALUE;
   if (authHeader && authValue) headers[authHeader] = authValue;
 
   const init: RequestInit = { method: opts.method, headers };
-  if (opts.hasBody && args.body !== undefined) {
-    init.body = JSON.stringify(args.body);
+  if (opts.hasBody) {
+    const body = args.body !== undefined ? args.body : opts.defaultBody;
+    if (body !== undefined) {
+      init.body = typeof body === "string" ? body : JSON.stringify(body);
+    }
   }
 
   const res = await fetch(url, init);

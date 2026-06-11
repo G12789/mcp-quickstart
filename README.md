@@ -22,13 +22,19 @@ Most "create an MCP server" guides leave you with an empty skeleton and a 20-ste
 
 ## Turn any REST API into an MCP server
 
-Every other scaffolder hands you an *empty* template and says "now go write your tools." `mcp-quickstart` is the only one that can **read an existing API and write the tools for you**:
+Every other scaffolder hands you an *empty* template and says "now go write your tools." `mcp-quickstart` is the only one that can **read an existing API and write the tools for you** — from an OpenAPI spec **or** a single curl command:
 
 ```bash
+# whole API, from an OpenAPI spec:
 npx mcp-quickstart petstore-mcp --from-openapi https://petstore3.swagger.io/api/v3/openapi.json
+
+# one endpoint, straight from a curl you already have:
+npx mcp-quickstart my-tool --from-curl "curl https://api.example.com/v1/search?q=hi -H 'Authorization: Bearer X'"
 ```
 
 Point it at any OpenAPI 3.x document (a URL or a local `.json` / `.yaml`) and it generates a real, typed MCP server — **one tool per operation**, with path/query params and request bodies wired up to a small HTTP client. Set `API_BASE_URL` (and an optional auth header) in `.env`, run `npm run dev`, and your AI agent can call the API immediately.
+
+**`--from-curl`** does the same for a single request: paste a curl command (or a file with one) and get one MCP tool. Query params and the JSON body become overridable tool inputs, and **auth headers are moved to `.env` instead of being hard-coded** into the generated source.
 
 ```
 my-api-mcp/
@@ -55,6 +61,7 @@ The official scaffolder gives you a bare bones starting point. `mcp-quickstart` 
 | Claude Desktop + Cursor config in README | – | ✅ |
 | TypeScript **and** Python | one | ✅ both |
 | **Generate tools from an OpenAPI spec** | – | ✅ |
+| **Generate a tool from a curl command** | – | ✅ |
 | `.env.example`, `.gitignore`, sane `tsconfig` | partly | ✅ |
 
 ## Quick start
@@ -101,6 +108,7 @@ Heavy logic lives in a separate, pure `tools.ts` / `tools.py` so it stays trivia
 npm create mcp-quickstart@latest [name] [options]
 
   --from-openapi <path|url>  generate one MCP tool per API operation from an OpenAPI spec
+  --from-curl <cmd|file>     turn a single curl command into an MCP tool
   --lang <ts|python>         language (default: prompt)
   --transport <stdio|http>   transport (default: prompt)
   --examples <bool>          include the example primitives (default: true)
@@ -115,6 +123,7 @@ npm create mcp-quickstart@latest [name] [options]
 | TypeScript | stdio | ✅ stable |
 | TypeScript | streamable HTTP | ✅ stable |
 | TypeScript | **from OpenAPI** (`--from-openapi`) | ✅ stable |
+| TypeScript | **from curl** (`--from-curl`) | ✅ stable |
 | Python | stdio | ✅ stable |
 | Python | streamable HTTP | ✅ stable |
 
@@ -126,10 +135,13 @@ npm create mcp-quickstart@latest my-server -- --lang ts --transport http -y
 
 ## Roadmap
 
-- `--from-openapi` for Python output + richer request-body schemas
-- `--from-postman` / `--from-curl` importers
+- Expand `--from-openapi` / `--from-curl` request bodies into per-field typed inputs (resolve `$ref`)
+- `--from-postman` importer (Postman collections → MCP tools)
+- Python output for the generated (OpenAPI / curl) servers
 - `--with auth` (OAuth) preset for HTTP transport
 - GitHub Action template to publish your server to npm / PyPI
+
+Done: `--from-openapi` (v0.2.0) · `--from-curl` (v0.3.0).
 
 Issues and PRs welcome — every issue gets a reply within 24h.
 

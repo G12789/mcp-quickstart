@@ -15,6 +15,7 @@ src/
   index.js      CLI entry: arg parsing, prompts, orchestration
   scaffold.js   recursive template copy + placeholder replacement (incl. extra vars)
   openapi.js    OpenAPI loader + spec->tools codegen (the --from-openapi feature)
+  curl.js       curl tokenizer/parser + curl->tool codegen (the --from-curl feature)
 templates/
   typescript-stdio/    working TS MCP server (stdio)
   typescript-http/     working TS MCP server (streamable HTTP, Express)
@@ -41,6 +42,7 @@ npm install
 node src/index.js tmp-out --lang ts -y      # generate a TS project
 node src/index.js tmp-out-py --lang python -y
 node src/index.js tmp-api --from-openapi scripts/fixtures/sample-openapi.json -y
+node src/index.js tmp-curl --from-curl scripts/fixtures/sample-curl.txt -y
 npm run test:e2e                            # scaffolds + builds + tests every variant
 ```
 

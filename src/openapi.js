@@ -28,7 +28,7 @@ export async function loadSpec(source) {
 
 const HTTP_METHODS = ["get", "post", "put", "patch", "delete", "head", "options"];
 
-function toIdentifier(str) {
+export function toIdentifier(str) {
   const cleaned = String(str)
     .replace(/[^a-zA-Z0-9]+/g, "_")
     .replace(/^_+|_+$/g, "")
@@ -64,7 +64,7 @@ function zodForSchema(schema) {
   }
 }
 
-function escapeForJs(str) {
+export function escapeForJs(str) {
   return String(str || "").replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\r?\n/g, " ").trim();
 }
 
@@ -183,6 +183,7 @@ export async function buildOpenApiVars(source) {
     TOOLS: generateToolsCode(tools),
     BASE_URL: resolveBaseUrl(spec),
     API_TITLE: (spec.info && spec.info.title) || "API",
+    AUTH_HEADER: "",
     TOOL_COUNT: String(tools.length),
     toolCount: tools.length,
   };

@@ -1,0 +1,5 @@
+curl -X POST 'https://api.example.com/v1/messages?verbose=true' \
+  -H 'Authorization: Bearer SECRET123' \
+  -H 'X-Client: web' \
+  -H 'Content-Type: application/json' \
+  -d '{"text":"hello","to":"ada"}'
