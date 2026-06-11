@@ -14,6 +14,7 @@ License: MIT
 - OR (with `--from-openapi`): one typed MCP tool per API operation, wired to a generic HTTP client (path/query params, request body, auth header from env)
 - OR (with `--from-curl`): one MCP tool from a pasted curl command; query/body become overridable inputs and auth headers are moved to env (never hard-coded)
 - OR (with `--transport cloudflare`): a remote MCP server that deploys to Cloudflare Workers (stateless createMcpHandler, free plan, `npm run deploy`)
+- OR (combining the two, e.g. `--from-openapi <url> --transport cloudflare`): an API-backed remote MCP server ready to deploy worldwide to Workers in one command — every API operation becomes a tool, auth stays in Workers secrets
 - Passing unit tests, `.gitignore`, `.env.example`, and config (tsconfig / pyproject)
 - README with copy-paste Claude Desktop and Cursor configuration
 
@@ -22,6 +23,7 @@ License: MIT
 - A user wants to expose an existing REST API (with an OpenAPI/Swagger spec) to an AI agent as MCP tools
 - A user has a working curl command and wants it as an MCP tool
 - A user wants a remote MCP server deployed to the edge (Cloudflare Workers) reachable by Cursor/Claude over HTTP
+- A user wants to take an existing API and get a globally-deployed remote MCP server in one shot (combine `--from-openapi`/`--from-curl` with `--transport cloudflare`)
 - A user finds the official bare scaffolder too minimal
 - A user wants both TypeScript and Python options from one tool
 

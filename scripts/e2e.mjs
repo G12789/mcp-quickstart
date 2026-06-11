@@ -104,6 +104,23 @@ function checkCloudflare() {
   log(`[Cloudflare] OK`);
 }
 
+function checkCloudflareOpenApi() {
+  const name = "api-edge";
+  log(`\n[CF+OpenAPI] scaffolding API-backed remote MCP server...`);
+  run(process.execPath, [CLI, name, "--from-openapi", SAMPLE_SPEC, "--transport", "cloudflare", "-y"], root);
+  const dir = join(root, name);
+  if (!existsSync(join(dir, "src", "index.ts"))) throw new Error("cf+openapi scaffold missing src/index.ts");
+  if (!existsSync(join(dir, "wrangler.jsonc"))) throw new Error("cf+openapi scaffold missing wrangler.jsonc");
+  log(`[CF+OpenAPI] npm install...`);
+  run("npm", ["install", "--no-audit", "--no-fund"], dir);
+  log(`[CF+OpenAPI] typecheck...`);
+  run("npm", ["run", "typecheck"], dir);
+  log(`[CF+OpenAPI] wrangler bundle (deploy --dry-run)...`);
+  run("npm", ["run", "build"], dir);
+  if (!existsSync(join(dir, "dist"))) throw new Error("wrangler dry-run produced no dist/");
+  log(`[CF+OpenAPI] OK`);
+}
+
 function checkCurl() {
   const name = "curl-import";
   log(`\n[curl] scaffolding from curl command...`);
@@ -166,6 +183,13 @@ try {
   } catch (e) {
     failures++;
     console.error(`[Cloudflare] FAILED: ${e.message}`);
+  }
+
+  try {
+    checkCloudflareOpenApi();
+  } catch (e) {
+    failures++;
+    console.error(`[CF+OpenAPI] FAILED: ${e.message}`);
   }
 
   // Python is optional locally; skip cleanly if it is not installed.

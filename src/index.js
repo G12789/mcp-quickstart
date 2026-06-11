@@ -175,13 +175,18 @@ async function run() {
 
   const langAliases = { ts: "typescript", js: "typescript", typescript: "typescript", py: "python", python: "python" };
   const rawLang = flags.lang || responses.language || "typescript";
-  const transport = isGenerated ? "openapi" : flags.transport || responses.transport || "stdio";
+  // When generating from an API, the user can still target Cloudflare Workers.
+  const wantsCloudflare = (flags.transport || responses.transport) === "cloudflare";
+  const transport = isGenerated
+    ? wantsCloudflare
+      ? "cloudflare"
+      : "openapi"
+    : flags.transport || responses.transport || "stdio";
   // The Cloudflare Workers template is TypeScript-only.
-  const language = isGenerated
-    ? "typescript"
-    : transport === "cloudflare"
-    ? "typescript"
-    : langAliases[String(rawLang).toLowerCase()] || rawLang;
+  const language =
+    isGenerated || transport === "cloudflare"
+      ? "typescript"
+      : langAliases[String(rawLang).toLowerCase()] || rawLang;
   const withExamples =
     flags.examples !== undefined
       ? flags.examples !== "false" && flags.examples !== false
@@ -213,7 +218,11 @@ async function run() {
     console.log(pc.dim(`  Built 1 MCP tool calling ${pc.reset(pc.bold(extraVars.BASE_URL))}.`));
   }
 
-  const templateName = isGenerated ? "typescript-openapi" : `${language}-${transport}`;
+  const templateName = isGenerated
+    ? wantsCloudflare
+      ? "typescript-cloudflare-openapi"
+      : "typescript-openapi"
+    : `${language}-${transport}`;
   const templateDir = join(TEMPLATES_DIR, templateName);
   if (!existsSync(templateDir)) {
     console.log(

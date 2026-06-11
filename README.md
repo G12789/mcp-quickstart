@@ -61,6 +61,23 @@ npm run deploy        # → https://edge-server.<you>.workers.dev/mcp
 
 Then point Cursor / Claude at the `/mcp` URL. This is exactly what edge runtimes are good at — **low-latency orchestration**, not running models. (To run a model you still call a GPU backend; the Worker is the global front door / gateway.)
 
+## The closed loop: API → globally-deployed remote MCP server
+
+Combine the two ideas. Feed an OpenAPI spec (or a single `curl`) **and** target Cloudflare, and you get an API-backed remote MCP server that's ready to deploy worldwide — in one command:
+
+```bash
+npx mcp-quickstart api-edge \
+  --from-openapi https://petstore3.swagger.io/api/v3/openapi.json \
+  --transport cloudflare -y
+cd api-edge && npm install
+npx wrangler secret put API_AUTH_VALUE   # if the API needs auth
+npm run deploy        # → https://api-edge.<you>.workers.dev/mcp
+```
+
+Every API operation becomes an MCP tool, wired through a generated HTTP client, served by `createMcpHandler` on the **free Workers plan**. The base URL is baked in from the spec; auth lives in Workers **secrets**, never in your code or git. `--from-curl … --transport cloudflare` works the same way for a single endpoint.
+
+There's no extra cost to ship this: the scaffold, npm publish and the Workers free tier are all free — you only pay for the upstream API/traffic *you* choose to use.
+
 ---
 
 ## Why mcp-quickstart
@@ -141,6 +158,7 @@ npm create mcp-quickstart@latest [name] [options]
 | TypeScript | **from OpenAPI** (`--from-openapi`) | ✅ stable |
 | TypeScript | **from curl** (`--from-curl`) | ✅ stable |
 | TypeScript | **Cloudflare Workers** (`--transport cloudflare`) | ✅ stable |
+| TypeScript | **API → Workers** (`--from-openapi/--from-curl … --transport cloudflare`) | ✅ stable |
 | Python | stdio | ✅ stable |
 | Python | streamable HTTP | ✅ stable |
 
@@ -152,12 +170,11 @@ npm create mcp-quickstart@latest my-server -- --lang ts --transport http -y
 
 ## Roadmap
 
-- Combine the importers with the edge target: `--from-openapi … --transport cloudflare` (deploy an API-backed MCP server to Workers in one shot)
 - `--from-postman` importer (Postman collections → MCP tools)
 - Python output for the generated (OpenAPI / curl) servers
 - `--with auth` (OAuth) preset for the Cloudflare / HTTP transports
 
-Done: `--from-openapi` (v0.2.0) · `--from-curl` (v0.3.0) · per-field typed bodies / `$ref` (v0.4.0) · **Cloudflare Workers deploy target** (v0.5.0).
+Done: `--from-openapi` (v0.2.0) · `--from-curl` (v0.3.0) · per-field typed bodies / `$ref` (v0.4.0) · **Cloudflare Workers deploy target** (v0.5.0) · **API → Workers in one shot** (v0.6.0).
 
 Issues and PRs welcome — every issue gets a reply within 24h.
 

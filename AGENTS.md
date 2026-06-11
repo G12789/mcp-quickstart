@@ -22,6 +22,7 @@ templates/
   typescript-http/     working TS MCP server (streamable HTTP, Express)
   typescript-openapi/  TS MCP server generated from an OpenAPI spec / curl ({{TOOLS}} injection)
   typescript-cloudflare/ remote MCP server for Cloudflare Workers (createMcpHandler, wrangler)
+  typescript-cloudflare-openapi/ API-backed remote MCP server for Workers ({{TOOLS}} injection + http.ts); used when a generated source is combined with --transport cloudflare
   python-stdio/        working Python MCP server (stdio)
   python-http/         working Python MCP server (streamable HTTP, FastMCP)
 ```
@@ -45,6 +46,7 @@ node src/index.js tmp-out --lang ts -y      # generate a TS project
 node src/index.js tmp-out-py --lang python -y
 node src/index.js tmp-api --from-openapi scripts/fixtures/sample-openapi.json -y
 node src/index.js tmp-curl --from-curl scripts/fixtures/sample-curl.txt -y
+node src/index.js tmp-edge --from-openapi scripts/fixtures/sample-openapi.json --transport cloudflare -y  # API -> Workers
 npm run test:e2e                            # scaffolds + builds + tests every variant
 ```
 
