@@ -32,7 +32,7 @@ npx mcp-quickstart petstore-mcp --from-openapi https://petstore3.swagger.io/api/
 npx mcp-quickstart my-tool --from-curl "curl https://api.example.com/v1/search?q=hi -H 'Authorization: Bearer X'"
 ```
 
-Point it at any OpenAPI 3.x document (a URL or a local `.json` / `.yaml`) and it generates a real, typed MCP server — **one tool per operation**, with path/query params and request bodies wired up to a small HTTP client. Set `API_BASE_URL` (and an optional auth header) in `.env`, run `npm run dev`, and your AI agent can call the API immediately.
+Point it at any OpenAPI 3.x document (a URL or a local `.json` / `.yaml`) and it generates a real, typed MCP server — **one tool per operation**, with path/query params and request bodies wired up to a small HTTP client. Request bodies are **expanded into per-field zod types** (`$ref`, nested objects, arrays and enums resolved), not an opaque blob — so the AI gets a real schema for each tool. Set `API_BASE_URL` (and an optional auth header) in `.env`, run `npm run dev`, and your AI agent can call the API immediately.
 
 **`--from-curl`** does the same for a single request: paste a curl command (or a file with one) and get one MCP tool. Query params and the JSON body become overridable tool inputs, and **auth headers are moved to `.env` instead of being hard-coded** into the generated source.
 
@@ -135,13 +135,12 @@ npm create mcp-quickstart@latest my-server -- --lang ts --transport http -y
 
 ## Roadmap
 
-- Expand `--from-openapi` / `--from-curl` request bodies into per-field typed inputs (resolve `$ref`)
 - `--from-postman` importer (Postman collections → MCP tools)
 - Python output for the generated (OpenAPI / curl) servers
 - `--with auth` (OAuth) preset for HTTP transport
 - GitHub Action template to publish your server to npm / PyPI
 
-Done: `--from-openapi` (v0.2.0) · `--from-curl` (v0.3.0).
+Done: `--from-openapi` (v0.2.0) · `--from-curl` (v0.3.0) · per-field typed request bodies / `$ref` resolution (v0.4.0).
 
 Issues and PRs welcome — every issue gets a reply within 24h.
 

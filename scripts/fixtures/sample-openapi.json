@@ -27,7 +27,7 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "type": "object" }
+              "schema": { "$ref": "#/components/schemas/Pet" }
             }
           }
         }
@@ -46,6 +46,27 @@
             "schema": { "type": "string" }
           }
         ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Pet": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" },
+          "age": { "type": "integer" },
+          "status": { "type": "string", "enum": ["available", "pending", "sold"] },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "owner": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "vip": { "type": "boolean" }
+            }
+          }
+        }
       }
     }
   }

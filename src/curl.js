@@ -11,6 +11,7 @@
  */
 import { readFileSync, existsSync } from "node:fs";
 import { toIdentifier, escapeForJs } from "./openapi.js";
+import { inferZodFromValue } from "./schema.js";
 
 const VALUE_FLAGS = new Set([
   "-X",
@@ -128,13 +129,6 @@ export function parseCurl(input) {
   return { method, url, headers, body };
 }
 
-function zodForBody(parsed) {
-  if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-    return "z.record(z.any()).optional()";
-  }
-  return "z.string().optional()";
-}
-
 /** Build the template variables for a curl import. */
 export function buildCurlVars(source) {
   const raw = existsSync(source) ? readFileSync(source, "utf8") : source;
@@ -178,7 +172,7 @@ export function buildCurlVars(source) {
     fields.push(`${JSON.stringify(q)}: z.string().optional().describe("query param")`);
   }
   if (hasBody) {
-    fields.push(`"body": ${zodForBody(defaultBody)}.describe("override the request body")`);
+    fields.push(`"body": ${inferZodFromValue(defaultBody)}.optional().describe("override the request body")`);
   }
   const schema = fields.length ? `{\n      ${fields.join(",\n      ")}\n    }` : "{}";
 

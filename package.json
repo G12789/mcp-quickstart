@@ -1,6 +1,6 @@
 {
   "name": "create-mcp-quickstart",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Scaffold a working MCP server in 30s — or generate MCP tools straight from an OpenAPI spec or a curl command. TypeScript + Python, example tools, inspector and tests included.",
   "type": "module",
   "bin": {

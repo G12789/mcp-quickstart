@@ -4,6 +4,8 @@
  * Loads an OpenAPI 3.x document (JSON or YAML, from a local path or a URL),
  * turns every operation into an MCP tool definition, and generates the
  * TypeScript source that registers those tools against a generic HTTP helper.
+ * Parameters and request bodies are expanded into per-field zod schemas via
+ * ./schema.js (with $ref resolution), not opaque records.
  *
  * This is the piece that makes mcp-quickstart different from every other
  * scaffolder: you point it at an existing API and get a working MCP server,
@@ -11,6 +13,7 @@
  */
 import { readFileSync } from "node:fs";
 import yaml from "js-yaml";
+import { resolveRef, schemaToZod } from "./schema.js";
 
 export async function loadSpec(source) {
   let raw;
@@ -47,21 +50,16 @@ function uniqueName(base, used) {
   return name;
 }
 
-function zodForSchema(schema) {
-  if (!schema || typeof schema !== "object") return "z.string()";
-  switch (schema.type) {
-    case "integer":
-    case "number":
-      return "z.number()";
-    case "boolean":
-      return "z.boolean()";
-    case "array":
-      return "z.array(z.any())";
-    case "object":
-      return "z.record(z.any())";
-    default:
-      return "z.string()";
-  }
+function getRequestBodySchema(op, spec) {
+  let rb = op.requestBody;
+  if (!rb) return undefined;
+  if (rb.$ref) rb = resolveRef(spec, rb.$ref) || {};
+  const content = rb.content || {};
+  const json =
+    content["application/json"] ||
+    content["application/*+json"] ||
+    Object.values(content)[0];
+  return json && json.schema;
 }
 
 export function escapeForJs(str) {
@@ -84,14 +82,15 @@ export function specToTools(spec) {
       const op = pathItem[method];
       if (!op || typeof op !== "object") continue;
 
-      const params = [...sharedParams, ...(Array.isArray(op.parameters) ? op.parameters : [])];
+      const rawParams = [...sharedParams, ...(Array.isArray(op.parameters) ? op.parameters : [])];
       const pathParams = [];
       const queryParams = [];
       const fields = [];
 
-      for (const p of params) {
+      for (let p of rawParams) {
+        if (p && p.$ref) p = resolveRef(spec, p.$ref) || {};
         if (!p || !p.name) continue;
-        const zod = zodForSchema(p.schema);
+        const zod = schemaToZod(p.schema || { type: "string" }, spec);
         const desc = escapeForJs(p.description || `${p.in} parameter`);
         const required = p.required || p.in === "path";
         const field = `${JSON.stringify(p.name)}: ${zod}${required ? "" : ".optional()"}.describe("${desc}")`;
@@ -102,7 +101,9 @@ export function specToTools(spec) {
 
       const hasBody = Boolean(op.requestBody);
       if (hasBody) {
-        fields.push(`"body": z.record(z.any()).optional().describe("JSON request body")`);
+        const bodySchema = getRequestBodySchema(op, spec);
+        const bodyZod = bodySchema ? schemaToZod(bodySchema, spec) : "z.record(z.any())";
+        fields.push(`"body": ${bodyZod}.optional().describe("JSON request body")`);
       }
 
       const baseName = toIdentifier(op.operationId || `${method}_${path}`);

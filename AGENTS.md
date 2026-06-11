@@ -16,6 +16,7 @@ src/
   scaffold.js   recursive template copy + placeholder replacement (incl. extra vars)
   openapi.js    OpenAPI loader + spec->tools codegen (the --from-openapi feature)
   curl.js       curl tokenizer/parser + curl->tool codegen (the --from-curl feature)
+  schema.js     JSON/OpenAPI schema -> zod string (+ $ref resolve, infer from value)
 templates/
   typescript-stdio/    working TS MCP server (stdio)
   typescript-http/     working TS MCP server (streamable HTTP, Express)
