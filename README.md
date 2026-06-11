@@ -1,5 +1,6 @@
 # mcp-forge
 
+[![CI](https://github.com/G12789/mcp-forge/actions/workflows/ci.yml/badge.svg)](https://github.com/G12789/mcp-forge/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/create-mcp-forge?color=cb3837&logo=npm)](https://www.npmjs.com/package/create-mcp-forge)
 [![node](https://img.shields.io/badge/node-%3E%3D18-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
@@ -42,6 +43,12 @@ npm create mcp-forge@latest
 npm create mcp-forge@latest weather-server -- --lang ts -y
 npx mcp-forge weather-server --lang python -y
 ```
+
+> **Before it lands on npm**, you can run it straight from GitHub:
+>
+> ```bash
+> npx github:G12789/mcp-forge weather-server --lang ts -y
+> ```
 
 Then:
 

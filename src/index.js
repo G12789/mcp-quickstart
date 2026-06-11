@@ -1,13 +1,22 @@
 #!/usr/bin/env node
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve, basename } from "node:path";
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import prompts from "prompts";
 import pc from "picocolors";
 import { scaffold } from "./scaffold.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const TEMPLATES_DIR = join(__dirname, "..", "templates");
+
+function readVersion() {
+  try {
+    const pkg = JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf8"));
+    return pkg.version || "0.0.0";
+  } catch {
+    return "0.0.0";
+  }
+}
 
 const LANGUAGES = [
   { title: "TypeScript  (Node, recommended)", value: "typescript" },
@@ -76,7 +85,7 @@ async function run() {
     return;
   }
   if (flags.version || flags.v) {
-    console.log("0.1.0");
+    console.log(readVersion());
     return;
   }
 

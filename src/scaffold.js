@@ -26,8 +26,11 @@ const RENAME_MAP = {
   "_env.example": ".env.example",
 };
 
+const TEXT_FILENAMES = new Set(["license", "readme", "dockerfile", "makefile"]);
+
 function isTextFile(filename) {
   const lower = filename.toLowerCase();
+  if (TEXT_FILENAMES.has(lower)) return true;
   for (const ext of TEXT_EXTENSIONS) {
     if (lower.endsWith(ext)) return true;
   }
