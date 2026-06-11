@@ -1,0 +1,4 @@
+# Copy to .env and fill in if your tools need secrets / API keys.
+# Never commit .env. Load these with os.environ["YOUR_KEY"] in tools.py.
+
+# EXAMPLE_API_KEY=

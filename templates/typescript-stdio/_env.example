@@ -1,0 +1,4 @@
+# Copy to .env and fill in if your tools need secrets / API keys.
+# Never commit .env. Read these with process.env.YOUR_KEY in index.ts.
+
+# EXAMPLE_API_KEY=

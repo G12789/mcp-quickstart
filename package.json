@@ -1,0 +1,46 @@
+{
+  "name": "create-mcp-forge",
+  "version": "0.1.0",
+  "description": "Scaffold a working, testable, publishable Model Context Protocol (MCP) server in 30 seconds. TypeScript + Python, with example tools, built-in inspector and tests included.",
+  "type": "module",
+  "bin": {
+    "mcp-forge": "src/index.js",
+    "create-mcp-forge": "src/index.js"
+  },
+  "files": [
+    "src",
+    "templates"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "scaffold",
+    "generator",
+    "cli",
+    "create",
+    "ai-agents",
+    "llm",
+    "claude",
+    "cursor",
+    "template",
+    "starter",
+    "boilerplate"
+  ],
+  "author": "G12789",
+  "license": "MIT",
+  "dependencies": {
+    "prompts": "^2.4.2",
+    "picocolors": "^1.1.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/G12789/mcp-forge.git"
+  }
+}
