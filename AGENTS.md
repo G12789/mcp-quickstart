@@ -13,12 +13,14 @@ published to npm as **`create-mcp-quickstart`** and invoked via
 ```
 src/
   index.js      CLI entry: arg parsing, prompts, orchestration
-  scaffold.js   recursive template copy + placeholder replacement
+  scaffold.js   recursive template copy + placeholder replacement (incl. extra vars)
+  openapi.js    OpenAPI loader + spec->tools codegen (the --from-openapi feature)
 templates/
-  typescript-stdio/   working TS MCP server (stdio)
-  typescript-http/    working TS MCP server (streamable HTTP, Express)
-  python-stdio/       working Python MCP server (stdio)
-  python-http/        working Python MCP server (streamable HTTP, FastMCP)
+  typescript-stdio/    working TS MCP server (stdio)
+  typescript-http/     working TS MCP server (streamable HTTP, Express)
+  typescript-openapi/  TS MCP server generated from an OpenAPI spec ({{TOOLS}} injection)
+  python-stdio/        working Python MCP server (stdio)
+  python-http/         working Python MCP server (streamable HTTP, FastMCP)
 ```
 
 ## Conventions
@@ -38,10 +40,13 @@ templates/
 npm install
 node src/index.js tmp-out --lang ts -y      # generate a TS project
 node src/index.js tmp-out-py --lang python -y
+node src/index.js tmp-api --from-openapi scripts/fixtures/sample-openapi.json -y
+npm run test:e2e                            # scaffolds + builds + tests every variant
 ```
 
 Then inside a generated TS project: `npm install && npm test && npm run build`.
 The generated server must start and print `... running on stdio` to stderr.
+For the OpenAPI variant, `npm run build` (tsc) is the test: generated tools must typecheck.
 
 ## Adding a template
 

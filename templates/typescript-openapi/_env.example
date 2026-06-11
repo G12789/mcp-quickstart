@@ -1,0 +1,12 @@
+# Base URL for the API (overrides the default baked in from the spec)
+API_BASE_URL={{BASE_URL}}
+
+# Optional auth header sent on every request.
+# Examples:
+#   API_AUTH_HEADER=Authorization
+#   API_AUTH_VALUE=Bearer YOUR_TOKEN
+# or:
+#   API_AUTH_HEADER=X-API-Key
+#   API_AUTH_VALUE=YOUR_KEY
+API_AUTH_HEADER=
+API_AUTH_VALUE=

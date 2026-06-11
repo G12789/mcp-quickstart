@@ -20,6 +20,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CLI = join(__dirname, "..", "src", "index.js");
+const SAMPLE_SPEC = join(__dirname, "fixtures", "sample-openapi.json");
 
 const TS_TEMPLATES = [
   { lang: "ts", transport: "stdio" },
@@ -70,6 +71,21 @@ function checkTs({ lang, transport }) {
   log(`[TS ${transport}] OK`);
 }
 
+function checkOpenApi() {
+  const name = "openapi-petstore";
+  log(`\n[OpenAPI] scaffolding from spec...`);
+  run(process.execPath, [CLI, name, "--from-openapi", SAMPLE_SPEC, "-y"], root);
+  const dir = join(root, name);
+  if (!existsSync(dir)) throw new Error("openapi scaffold produced no directory");
+  if (!existsSync(join(dir, "src", "index.ts"))) throw new Error("openapi scaffold missing src/index.ts");
+  log(`[OpenAPI] npm install...`);
+  run("npm", ["install", "--no-audit", "--no-fund"], dir);
+  log(`[OpenAPI] npm run build (typecheck generated tools)...`);
+  run("npm", ["run", "build"], dir);
+  if (!existsSync(join(dir, "dist"))) throw new Error("build produced no dist/");
+  log(`[OpenAPI] OK`);
+}
+
 function checkPy({ lang, transport }) {
   const name = `py-${transport}`;
   log(`\n[PY ${transport}] scaffolding...`);
@@ -97,6 +113,13 @@ try {
       failures++;
       console.error(`[TS ${t.transport}] FAILED: ${e.message}`);
     }
+  }
+
+  try {
+    checkOpenApi();
+  } catch (e) {
+    failures++;
+    console.error(`[OpenAPI] FAILED: ${e.message}`);
   }
 
   // Python is optional locally; skip cleanly if it is not installed.

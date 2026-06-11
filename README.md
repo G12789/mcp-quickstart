@@ -8,6 +8,7 @@
 
 > **Forge a working, testable, publishable MCP server in 30 seconds.**
 > One command. TypeScript **or** Python. Example tools, the Inspector, and tests — all wired up.
+> Or point it at an OpenAPI spec and get **one MCP tool per API endpoint, automatically.**
 
 ```bash
 npm create mcp-quickstart@latest my-server
@@ -16,6 +17,28 @@ npm create mcp-quickstart@latest my-server
 ![mcp-quickstart demo](assets/demo.svg)
 
 Most "create an MCP server" guides leave you with an empty skeleton and a 20-step setup. `mcp-quickstart` hands you a server that **runs, tests, and connects to Claude / Cursor on the first try** — then gets out of your way.
+
+---
+
+## Turn any REST API into an MCP server
+
+Every other scaffolder hands you an *empty* template and says "now go write your tools." `mcp-quickstart` is the only one that can **read an existing API and write the tools for you**:
+
+```bash
+npx mcp-quickstart petstore-mcp --from-openapi https://petstore3.swagger.io/api/v3/openapi.json
+```
+
+Point it at any OpenAPI 3.x document (a URL or a local `.json` / `.yaml`) and it generates a real, typed MCP server — **one tool per operation**, with path/query params and request bodies wired up to a small HTTP client. Set `API_BASE_URL` (and an optional auth header) in `.env`, run `npm run dev`, and your AI agent can call the API immediately.
+
+```
+my-api-mcp/
+├── src/
+│   ├── index.ts   # one registerTool(...) per API operation — plain, editable TS
+│   └── http.ts    # generic caller: URL building, auth header, body
+└── .env.example   # API_BASE_URL, API_AUTH_HEADER, API_AUTH_VALUE
+```
+
+No magic, no runtime spec parsing — just generated TypeScript you own and can edit.
 
 ---
 
@@ -31,6 +54,7 @@ The official scaffolder gives you a bare bones starting point. `mcp-quickstart` 
 | One-command **Inspector** (`npm run inspect`) | – | ✅ |
 | Claude Desktop + Cursor config in README | – | ✅ |
 | TypeScript **and** Python | one | ✅ both |
+| **Generate tools from an OpenAPI spec** | – | ✅ |
 | `.env.example`, `.gitignore`, sane `tsconfig` | partly | ✅ |
 
 ## Quick start
@@ -76,6 +100,7 @@ Heavy logic lives in a separate, pure `tools.ts` / `tools.py` so it stays trivia
 ```
 npm create mcp-quickstart@latest [name] [options]
 
+  --from-openapi <path|url>  generate one MCP tool per API operation from an OpenAPI spec
   --lang <ts|python>         language (default: prompt)
   --transport <stdio|http>   transport (default: prompt)
   --examples <bool>          include the example primitives (default: true)
@@ -89,6 +114,7 @@ npm create mcp-quickstart@latest [name] [options]
 |---|---|:---:|
 | TypeScript | stdio | ✅ stable |
 | TypeScript | streamable HTTP | ✅ stable |
+| TypeScript | **from OpenAPI** (`--from-openapi`) | ✅ stable |
 | Python | stdio | ✅ stable |
 | Python | streamable HTTP | ✅ stable |
 
@@ -100,8 +126,9 @@ npm create mcp-quickstart@latest my-server -- --lang ts --transport http -y
 
 ## Roadmap
 
+- `--from-openapi` for Python output + richer request-body schemas
+- `--from-postman` / `--from-curl` importers
 - `--with auth` (OAuth) preset for HTTP transport
-- Extra example tool packs (HTTP fetch, SQLite, filesystem)
 - GitHub Action template to publish your server to npm / PyPI
 
 Issues and PRs welcome — every issue gets a reply within 24h.

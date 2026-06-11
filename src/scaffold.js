@@ -38,11 +38,22 @@ function isTextFile(filename) {
 }
 
 function applyVars(content, vars) {
-  return content
+  let out = content
     .replaceAll("{{projectName}}", vars.projectName)
     .replaceAll("{{projectNameSnake}}", vars.projectName.replaceAll("-", "_"))
-    .replaceAll("{{transport}}", vars.transport)
-    .replaceAll("{{language}}", vars.language);
+    .replaceAll("{{transport}}", vars.transport ?? "")
+    .replaceAll("{{language}}", vars.language ?? "");
+
+  // Inject any extra string variables (e.g. {{TOOLS}}, {{BASE_URL}} from the
+  // OpenAPI generator). Only string values are substituted.
+  if (vars.extra && typeof vars.extra === "object") {
+    for (const [key, value] of Object.entries(vars.extra)) {
+      if (typeof value === "string") {
+        out = out.replaceAll(`{{${key}}}`, value);
+      }
+    }
+  }
+  return out;
 }
 
 function walk(dir) {

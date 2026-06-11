@@ -5,6 +5,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import prompts from "prompts";
 import pc from "picocolors";
 import { scaffold } from "./scaffold.js";
+import { buildOpenApiVars } from "./openapi.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const TEMPLATES_DIR = join(__dirname, "..", "templates");
@@ -94,31 +95,47 @@ async function run() {
   const skipPrompts = flags.yes === true || flags.y === true;
   const cliName = _[0];
 
+  // OpenAPI mode: generate one MCP tool per API operation from a spec.
+  let openApiSource = flags["from-openapi"];
+  if (openApiSource === true) {
+    const { specPath } = await prompts(
+      {
+        type: "text",
+        name: "specPath",
+        message: "Path or URL to the OpenAPI spec (JSON or YAML)",
+        validate: (v) => (v && v.trim() ? true : "A spec path or URL is required"),
+      },
+      { onCancel }
+    );
+    openApiSource = specPath;
+  }
+  const isOpenApi = Boolean(openApiSource);
+
   const responses = await prompts(
     [
       {
         type: cliName ? null : "text",
         name: "projectName",
         message: "Project name",
-        initial: "my-mcp-server",
+        initial: isOpenApi ? "my-api-mcp" : "my-mcp-server",
         validate: (v) => validateProjectName(v),
       },
       {
-        type: flags.lang || skipPrompts ? null : "select",
+        type: flags.lang || skipPrompts || isOpenApi ? null : "select",
         name: "language",
         message: "Language",
         choices: LANGUAGES,
         initial: 0,
       },
       {
-        type: flags.transport || skipPrompts ? null : "select",
+        type: flags.transport || skipPrompts || isOpenApi ? null : "select",
         name: "transport",
         message: "Transport",
         choices: TRANSPORTS,
         initial: 0,
       },
       {
-        type: flags.examples !== undefined || skipPrompts ? null : "toggle",
+        type: flags.examples !== undefined || skipPrompts || isOpenApi ? null : "toggle",
         name: "withExamples",
         message: "Include example tool / resource / prompt?",
         initial: true,
@@ -138,8 +155,8 @@ async function run() {
 
   const langAliases = { ts: "typescript", js: "typescript", typescript: "typescript", py: "python", python: "python" };
   const rawLang = flags.lang || responses.language || "typescript";
-  const language = langAliases[String(rawLang).toLowerCase()] || rawLang;
-  const transport = flags.transport || responses.transport || "stdio";
+  const language = isOpenApi ? "typescript" : langAliases[String(rawLang).toLowerCase()] || rawLang;
+  const transport = isOpenApi ? "openapi" : flags.transport || responses.transport || "stdio";
   const withExamples =
     flags.examples !== undefined
       ? flags.examples !== "false" && flags.examples !== false
@@ -147,7 +164,21 @@ async function run() {
       ? responses.withExamples
       : true;
 
-  const templateName = `${language}-${transport}`;
+  // Build OpenAPI-derived variables (tool code, base URL, ...) before scaffolding.
+  let extraVars;
+  if (isOpenApi) {
+    console.log("");
+    console.log(pc.dim(`  Reading OpenAPI spec from ${pc.reset(openApiSource)} ...`));
+    try {
+      extraVars = await buildOpenApiVars(openApiSource);
+    } catch (err) {
+      console.log(pc.red(`\n  Could not generate from spec: ${err?.message || err}\n`));
+      process.exit(1);
+    }
+    console.log(pc.dim(`  Found ${pc.reset(pc.bold(extraVars.TOOL_COUNT))} operations → ${extraVars.TOOL_COUNT} MCP tools.`));
+  }
+
+  const templateName = isOpenApi ? "typescript-openapi" : `${language}-${transport}`;
   const templateDir = join(TEMPLATES_DIR, templateName);
   if (!existsSync(templateDir)) {
     console.log(
@@ -182,13 +213,14 @@ async function run() {
       language,
       transport,
       withExamples,
+      extra: extraVars,
     },
   });
 
-  printNextSteps({ projectName, language, transport });
+  printNextSteps({ projectName, language, transport, isOpenApi });
 }
 
-function printNextSteps({ projectName, language, transport }) {
+function printNextSteps({ projectName, language, transport, isOpenApi }) {
   const isPy = language === "python";
   const isHttp = transport === "http";
   const install = isPy ? "uv sync          (or: pip install -e \".[dev]\")" : "npm install";
@@ -200,6 +232,9 @@ function printNextSteps({ projectName, language, transport }) {
   console.log("");
   console.log("    " + pc.cyan(`cd ${projectName}`));
   console.log("    " + pc.cyan(install));
+  if (isOpenApi) {
+    console.log("    " + pc.cyan("cp .env.example .env") + pc.dim("   # set API_BASE_URL + auth"));
+  }
   console.log("    " + pc.cyan(dev) + pc.dim("        # run the server"));
   console.log("    " + pc.cyan(inspect) + pc.dim("    # open the MCP Inspector to test tools"));
   console.log("");
@@ -216,6 +251,7 @@ function printHelp() {
     npx mcp-quickstart [name] [options]
 
   ${pc.bold("Options")}
+    --from-openapi <path|url>   generate one MCP tool per API operation from an OpenAPI spec
     --lang <ts|python>          language (default: prompt)
     --transport <stdio|http>    transport (default: prompt)
     --examples <true|false>     include example tool/resource/prompt
@@ -227,6 +263,8 @@ function printHelp() {
     npm create mcp-quickstart@latest weather-server
     npx mcp-quickstart my-server --lang ts --transport http -y
     npx mcp-quickstart my-server --lang python --transport stdio -y
+    ${pc.dim("# turn any REST API into an MCP server:")}
+    npx mcp-quickstart petstore-mcp --from-openapi https://petstore3.swagger.io/api/v3/openapi.json
 `);
 }
 

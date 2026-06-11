@@ -1,7 +1,7 @@
 {
   "name": "create-mcp-quickstart",
-  "version": "0.1.1",
-  "description": "Scaffold a working, testable, publishable Model Context Protocol (MCP) server in 30 seconds. TypeScript + Python, with example tools, built-in inspector and tests included.",
+  "version": "0.2.0",
+  "description": "Scaffold a working MCP server in 30s — or generate one MCP tool per endpoint straight from an OpenAPI spec. TypeScript + Python, example tools, inspector and tests included.",
   "type": "module",
   "bin": {
     "mcp-quickstart": "src/index.js",
@@ -22,6 +22,9 @@
   "keywords": [
     "mcp",
     "model-context-protocol",
+    "openapi",
+    "swagger",
+    "openapi-to-mcp",
     "scaffold",
     "generator",
     "cli",
@@ -38,7 +41,8 @@
   "license": "MIT",
   "dependencies": {
     "prompts": "^2.4.2",
-    "picocolors": "^1.1.1"
+    "picocolors": "^1.1.1",
+    "js-yaml": "^4.1.0"
   },
   "repository": {
     "type": "git",
